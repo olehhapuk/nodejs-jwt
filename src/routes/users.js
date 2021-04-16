@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 
 const { User } = require('../schemas');
-const { validateBySchema } = require('../middlewares');
+const { validateBySchema, authorize } = require('../middlewares');
 const { registerUserSchema, loginUserSchema } = require('../validationSchemas');
 const { jwt } = require('../utils');
 
@@ -102,6 +102,28 @@ router.post('/login', validateBySchema(loginUserSchema), async (req, res) => {
     res.status(500).json(error);
   }
 });
-// router.get('/me', authorize, UserController.me);
+
+router.get('/me', authorize, async (req, res) => {
+  try {
+    const user = await User.findById(res.locals.user.id);
+
+    if (!user) {
+      res.status(404).send('No user found');
+      return;
+    }
+
+    res.json({
+      user: {
+        _id: user._id,
+        email: user.email,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.dir(error, { depth: null });
+    res.status(500).json(error);
+  }
+});
 
 module.exports = router;
