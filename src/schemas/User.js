@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const UserSchema = new mongoose.Schema({
   email: {
@@ -20,6 +21,43 @@ const UserSchema = new mongoose.Schema({
     default: Date.now(),
     require: true,
   },
+});
+
+UserSchema.pre('findOneAndUpdate', async function (next) {
+  const update = this.getUpdate();
+
+  if (!update.password) {
+    next();
+    return;
+  }
+
+  const hashedPassword = await bcrypt.hash(
+    update.password,
+    Number(process.env.SALT_ROUNDS)
+  );
+
+  update.password = hashedPassword;
+
+  this.set({
+    updatedAt: Date.now(),
+  });
+
+  next();
+});
+
+UserSchema.pre('save', async function (next) {
+  console.log('save');
+
+  const hashedPassword = await bcrypt.hash(
+    this.get('password'),
+    Number(process.env.SALT_ROUNDS)
+  );
+
+  this.set({
+    password: hashedPassword,
+  });
+
+  next();
 });
 
 module.exports = mongoose.model('User', UserSchema);

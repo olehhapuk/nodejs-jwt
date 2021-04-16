@@ -1,15 +1,12 @@
 module.exports = (schema) => async (req, res, next) => {
   try {
-    const schemaValid = await schema.isValid(req.body);
-
-    if (!schemaValid) {
-      res.status(422).send('Validation error');
-      return;
-    }
+    await schema.validate(req.body, {
+      abortEarly: false,
+    });
 
     next();
   } catch (error) {
-    res.status(500).json(error);
+    res.status(422).json(error);
     return;
   }
 };
