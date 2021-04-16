@@ -110,24 +110,36 @@ router.get('/me', authorize, async (req, res) => {
   }
 });
 
-router.put('/:id', validateBySchema(updateUserSchema), async (req, res) => {
-  try {
-    const user = await User.findOneAndUpdate(
-      {
-        _id: req.params.id,
-      },
-      {
-        password: req.body.password,
-      }
-    );
+router.put(
+  '/:id',
+  validateBySchema(updateUserSchema),
+  authorize,
+  async (req, res) => {
+    try {
+      console.log(String(res.locals.user._id) === req.params.id);
 
-    res.json({
-      user: getSafeUserData(user),
-    });
-  } catch (error) {
-    console.dir(error, { depth: null });
-    res.status(500).json(error);
+      if (req.params.id !== String(res.locals.user._id)) {
+        res.status(401).send('Unauthorized');
+        return;
+      }
+
+      const user = await User.findOneAndUpdate(
+        {
+          _id: req.params.id,
+        },
+        {
+          password: req.body.password,
+        }
+      );
+
+      res.json({
+        user: getSafeUserData(user),
+      });
+    } catch (error) {
+      console.dir(error, { depth: null });
+      res.status(500).json(error);
+    }
   }
-});
+);
 
 module.exports = router;

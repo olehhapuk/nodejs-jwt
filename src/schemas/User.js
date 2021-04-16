@@ -26,6 +26,10 @@ const UserSchema = new mongoose.Schema({
 UserSchema.pre('findOneAndUpdate', async function (next) {
   const update = this.getUpdate();
 
+  this.set({
+    updatedAt: Date.now(),
+  });
+
   if (!update.password) {
     next();
     return;
@@ -37,10 +41,6 @@ UserSchema.pre('findOneAndUpdate', async function (next) {
   );
 
   update.password = hashedPassword;
-
-  this.set({
-    updatedAt: Date.now(),
-  });
 
   next();
 });
